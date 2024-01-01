@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="./assets/css/fullpage.css">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="./assets/js/fullpage.min.js"></script>
+    <title>Quiz Page</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #3d3d3d;
+        }
+        .section {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .answers {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background-color: #ccc;
+        }
+        .progress-bar-inner {
+            height: 100%;
+            width: 0;
+            background-color: #4CAF50;
+        }
+        .score {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+<div  class="container-fluid">
+    <div class="progress-bar">
+        <div class="progress-bar-inner"></div>
+    </div>
+    <div class="score text-light" id="score">0/35</div>
+    <div id="fullpage">
+        <!-- Questions will be dynamically added here -->
+    </div>
+</div>
+
+<script>
+    var correctAnswers = 0;
+    let timeout = null;
+
+    $(document).ready(function() {
+        const number = randomIntFromInterval(1, 110)
+        $.getJSON(`./questions/${number}.json`, function(data) {
+            // Add sections for each question
+            data.forEach(function(question, index) {
+                
+                var sectionHTML = `
+                <div class="px-lg-5 px-2 py-5 text-center section row ">
+                    <h3 class="display-7 fw-bold text-light">${index + 1}) ${question.Question}</h3>
+                    ${question.Image ? `<img class="img-fluid" src="https://drive.govt.nz/${question.Image}"></img>` : ''}
+                    <div class="answers mt-5 row">
+                `;
+                question.Answers.forEach(function(answer) {
+                    sectionHTML += 
+                    `
+                    <div class="col card p-2 mb-2 text-bg-secondary cursor-pointer"  onclick="checkAnswer(this,${answer.Correct})">
+                        <figure class="mb-0">
+                            <p class="mb-0">${answer.Answer}</p>
+                        </figure>
+                    </div>
+                    `;
+                });
+            
+                sectionHTML += `</div></div>`;
+                $("#fullpage").append(sectionHTML);
+            });
+
+            // Initialize fullpage.js
+            $('#fullpage').fullpage({
+                verticalCentered: false,
+                scrollHorizontally: true,
+                navigation: false,
+
+                showActiveTooltip:  true,
+                onLeave: function (origin, destination, direction, trigger) {
+                    // Update the progress bar
+                    updateProgressBar(destination.index / (data.length - 1) * 100);
+                }
+            });
+        });
+    });
+
+    function checkAnswer(button, isCorrect) {
+        // Implement logic to check the answer
+        clearTimeout(timeout)
+        if (isCorrect) {
+            correctAnswers++;
+            updateScore();
+            $(button).addClass('text-bg-success')
+        } else {
+            $(button).addClass('text-bg-danger')
+        }
+        timeout = setTimeout(()=> $.fn.fullpage.moveSectionDown(), 1000)
+    }
+
+    function updateProgressBar(percentage) {
+        // Update the width of the progress bar inner div based on the percentage
+        $('.progress-bar-inner').css('width', percentage + '%');
+    }
+
+    function updateScore() {
+        // Update the displayed score
+        $('#score').text(`${correctAnswers}/35`);
+    }
+    function randomIntFromInterval(min, max) { // min and max included 
+        return Math.floor(Math.random() * (max - min + 1) + min)
+    }
+</script>
+
+</body>
+</html>
