@@ -1,0 +1,14 @@
+name: Push to main
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    environment: Development
+    runs-on: runs-on
+    steps:
+      - name: Checkout Repository
+        run: echo "Hello world"

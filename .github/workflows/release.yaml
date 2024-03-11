@@ -1,0 +1,37 @@
+name: Create Release on Production Deployment
+
+on:
+  deployment_status:
+    types: [success]
+    # Filter deployments to only trigger on Production environment
+    environments:
+      - Development
+
+jobs:
+  create_release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Get last release tag
+        id: last_release
+        run: echo "tag=$(git describe --abbrev=0 --tags) >> $GITHUB_OUTPUT"
+
+      - name: Get commit messages since last release
+        id: commit_messages
+        run: echo "messages=$(git log --pretty=format:"%s" ${GITHUB_REF}...${{ steps.last_release.outputs.tag }})" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release ${{ github.run_number }}
+          body: ${{ steps.commit_messages.outputs.messages }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
